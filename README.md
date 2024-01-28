@@ -5,7 +5,7 @@ als Backend eines Web-Servers (wie bspw. Apache HTTPD oder NGINX) eingesetzt
 werden kann, um anhand des durch den Web-Server authentifizierten Nutzers eine
 Weiterleitungs-URL zu generieren, die folgenden Aufbau hat:
 
-        <sever_protocol>://<server_host>[:<server_port>]/[<server_context>]?<url_attr_username>=username&<url_attr_timestamp>=timestamp&<url_attr_hash_key>=hash_key[&<url_attr_id_key>=<id_key>]
+        <sever_protocol>://<server_host>[:<server_port>]/[<server_context>]?<url_attr_username_key>=username&<url_attr_timestamp_key>=timestamp&<url_attr_hash_key>=hash_val[&<url_attr_id_key>=<id_val>]
 
 Wenn ein Nutzer sich bspw.
 
@@ -37,13 +37,13 @@ Die Bedeutung der einzelnen URL-Parameter:
 * __server_context__
     * Kontext des Zielservers
     * optionaler Parameter
-* __url_attr_username__
+* __url_attr_username_key__
     * Name des Parameters, der den (durch den Web-Server) authentifizierten Accountnamen enthalten soll
     * optionaler Parameter mit Standard-Einstellung _user_
     * Format des Wertes
         * Es wird der Wert eingesetzt, der vom Web-Server im Authentifierungsvorgang ermittelt wurde.
         * Ggf. erfolgt ein URL-Encoding von Zeichen, die nicht in einer URL verwendet werden duerfen. Bspw. wird bei einer E-Mail-Adresse das __`@`__ Zeichen durch die HTML-Repraenstation __`%40`__ ersetzt.
-* __url_attr_timestamp__
+* __url_attr_timestamp_key__
     * Name des Parameters, der den aktuellen Zeitstempel enthalten soll
     * optionaler Parameter mit Standard-Einstellung _ts_
     * Format des Wertes
@@ -54,9 +54,13 @@ Die Bedeutung der einzelnen URL-Parameter:
     * optionaler Parameter mit Standard-Einstellung _hash_
     * Format des Wertes
         * Hexdezimalzahl des per RSA verschluesselten SHA1-Wertes aus Accountname und Zeitstempel
+        * der Hash-Wert wird immer berechnet
 * __url_attr_id_key__
     * Name des Parameters, der eine ID Schluessel enthalten soll
-    * optionaler Parameter
+    * optionaler Parameter mit Standard-Einstellung _id_
+    * Format des Wertes
+        * Zeichenkette
+        * falls diese Zeichenkette leer ist, wird das Attribut nicht gesetzt
 
 ## Die Berechnung des Hash-Wertes
 Die Berechnung des Hash-Wertes erfolgt folgendermassen:

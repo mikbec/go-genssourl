@@ -41,7 +41,8 @@ func main() {
 	// our static Route
 
 	// our own routes
-	mux.HandleFunc("/", showHome)
+	mux.HandleFunc("/", doRedirect)
+	mux.HandleFunc("/home", showHome)
 
 	log.Print("Starting server on :4000")
 	err = http.ListenAndServe(":4000", mux)
