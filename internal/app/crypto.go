@@ -29,26 +29,31 @@ func ParseRsaPublicKeyFromPemStr(pubPEM []byte) (*rsa.PublicKey, error) {
 		return nil, errors.New("failed to parse PEM block containing the key")
 	}
 
-	var cert* x509.Certificate
+	var cert *x509.Certificate
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
-        pub := cert.PublicKey.(*rsa.PublicKey)
+	pub := cert.PublicKey.(*rsa.PublicKey)
 	return pub, nil
 
-//	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-//	if err != nil {
-//		return nil, err
-//	}
-//	
-//	switch pub := pub.(type) {
-//	case *rsa.PublicKey:
-//		return pub, nil
-//	default:
-//		break // fall through
-//	}
-//	return nil, errors.New("Key type is not RSA")
+	// pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	//
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//
+	// switch pub := pub.(type) {
+	// case *rsa.PublicKey:
+	//
+	//	return pub, nil
+	//
+	// default:
+	//
+	//		break // fall through
+	//	}
+	//
+	// return nil, errors.New("Key type is not RSA")
 }
 
 func HexStringOfHashValue(inputMessage string, hashAlgo string) (string, error) {

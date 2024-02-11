@@ -2,15 +2,25 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
+	"net/http/fcgi"
 	"os"
+	"strconv"
 
 	"local/go-genssourl/ui"
 )
 
+var webCtxIdxs = make(map[string]int)
+
 func main() {
+	// first scan our Configuration
+	scanConfiguration()
+
+	// get a new mux
 	mux := http.NewServeMux()
 
+	// decide if we use our internal or extarnal pages/templates
 	path_to_static := "./ui/static/"
 	_, err := os.Stat(path_to_static)
 	if err == nil {
@@ -41,10 +51,71 @@ func main() {
 	// our static Route
 
 	// our own routes
-	mux.HandleFunc("/", doRedirect)
-	mux.HandleFunc("/home", showHome)
+	//mux.HandleFunc("/", doRedirect)
+	//mux.HandleFunc("/home", showHome)
+	for idx := 0; idx < len(myCfg.WebCtxs); idx++ {
+		str := myCfg.WebCtxs[idx].ThisServerCtx
+		if str == "" {
+			str = "/"
+		}
+		if idx2, ok := webCtxIdxs[str]; ok {
+			log.Print("Warning: Index" + strconv.Itoa(idx) + " overwrites index " + strconv.Itoa(idx2))
+		}
+		webCtxIdxs[str] = idx
+		log.Print("Adding web context '" + str + "' (index " + strconv.Itoa(idx) + ") to list of contexts ...")
 
-	log.Print("Starting server on :4000")
-	err = http.ListenAndServe(":4000", mux)
-	log.Fatal(err)
+		mux.HandleFunc(str, doRedirect)
+	}
+
+	// start server depending on commandline options
+	// got idea from:
+	//	https://muzzarelli.net/blog/2013/09/how-to-use-go-and-fastcgi/
+	// Run as a local or remote web server
+	if myCfg.CliOpts.OptCfgSvcWebTcp != "" {
+		// Run as HTTPS web server
+		if (myCfg.CliOpts.OptCfgSvcWebTcpCertFile != "") && (myCfg.CliOpts.OptCfgSvcWebTcpKeyFile != "") {
+			log.Print("HTTPS server is listening on https://" + myCfg.CliOpts.OptCfgSvcWebTcp)
+			err = http.ListenAndServeTLS(
+				myCfg.CliOpts.OptCfgSvcWebTcp,
+				myCfg.CliOpts.OptCfgSvcWebTcpCertFile,
+				myCfg.CliOpts.OptCfgSvcWebTcpKeyFile,
+				mux)
+
+			// Run as plain HTTP web server
+		} else {
+			log.Print("HTTP server is listening on http://" + myCfg.CliOpts.OptCfgSvcWebTcp)
+			err = http.ListenAndServe(myCfg.CliOpts.OptCfgSvcWebTcp, mux)
+		}
+
+		// Run as FCGI via TCP
+	} else if myCfg.CliOpts.OptCfgSvcFcgiTcp != "" {
+		listener, err := net.Listen("tcp", myCfg.CliOpts.OptCfgSvcFcgiTcp)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer listener.Close()
+
+		log.Print("FCGI server is listening on tcp://" + myCfg.CliOpts.OptCfgSvcFcgiTcp)
+		err = fcgi.Serve(listener, mux)
+
+		// Run as FCGI via UNIX socket
+	} else if myCfg.CliOpts.OptCfgSvcFcgiUnix != "" {
+		log.Print("FCGI server is listening on unix://" + myCfg.CliOpts.OptCfgSvcFcgiUnix)
+		listener, err := net.Listen("unix", myCfg.CliOpts.OptCfgSvcFcgiUnix)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer listener.Close()
+
+		err = fcgi.Serve(listener, mux)
+		// Run as FCGI via standard I/O
+	} else {
+		log.Print("FCGI server is listening on STD I/O")
+		err = fcgi.Serve(nil, mux)
+	}
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.Print("Server is going down...")
+	}
 }
