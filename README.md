@@ -47,8 +47,9 @@ Die Bedeutung der einzelnen URL-Parameter:
     * Name des Parameters, der den aktuellen Zeitstempel enthalten soll
     * optionaler Parameter mit Standard-Einstellung _ts_
     * Format des Wertes
-        * Der Zeitstempel hat den Wert __`JJJJ-MM-TTTSS:MM:SSZ`__, ein Beispiel __`2023-11-23T08:15:32Z`__
+        * Der Zeitstempel hat das Format als Layout-Wert __`2006-01-02T15:04:05Z`__
         * Ggf. erfolgt ein URL-Encoding von Zeichen, die nicht in einer URL verwendet werden duerfen.
+        * Hinweis: Das Go Layout-Format besteht aus Teilen des Datums __`2006-01-02 15:04:05 -0700`__, der Zeitzone __`MST`__, der Tagesbezeichnungen __`Mon`__ oder __`Monday`__ u.s.w..
 * __url_attr_hash_key__
     * Name des Parameters, der einen Hash-Wert enthalten soll, der aus dem Accountnamen und dem Zeitstempel berechnet wird.
     * optionaler Parameter mit Standard-Einstellung _hash_

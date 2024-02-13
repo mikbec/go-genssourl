@@ -9,6 +9,7 @@ import (
 	"github.com/eschao/config"
 	"github.com/kr/pretty"
 	"log"
+	"reflect"
 )
 
 // cmdline options
@@ -44,7 +45,7 @@ type WebCtx struct {
 	// url_attr_id_key := "id"
 	//
 	// username_val := "user1"
-	// timestamp_val := "2023-11-23T08:15:32Z"
+	// timestamp_val := "2006-01-02T15:04:05Z"
 	// pub_pem_file := "testdata/test.crt.pem"
 	// id_val := "test"
 
@@ -65,7 +66,7 @@ type WebCtx struct {
 
 	AlgorithmToUseForHash     string `default:"md5"             json:"algorithmToUseForHash" yaml:"algorithmToUseForHash"`
 	DstServerCertPemFile      string `default:"dst-srv.crt.pem" json:"dstServerCertPemFile" yaml:"dstServerCertPemFile"`
-	DstAttrValTimestampFormat string `default:"2000-01-01T01:00:00Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
+	DstAttrValTimestampFormat string `default:"2006-01-02T15:04:05Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
 	ThisServerCtx             string `default:"/"   json:"thisServerCtx" yaml:"thisServerCtx"`
 	ProxyAttrRemoteUserName   string `default:"REMOTE_USERNAME" json:"proxyAttrRemoteUsername" yaml:"proxyAttrRemoteUsername"`
 }
@@ -77,11 +78,20 @@ type Configuration struct {
 }
 
 var myCfg = Configuration{}
+var myDefaultWebCtx = WebCtx{}
 
 func scanConfiguration() {
+	// Parse config for Default web context and to initialize configuration structure.
+	log.Print("Parse config for Default web context values ....")
+	err := config.ParseDefault(&myDefaultWebCtx)
+	if err != nil {
+		// hmmm ... a real error
+		log.Fatal(err)
+	}
+
 	// Parse config for Default values and to initialize configuration structure.
 	log.Print("Parse config for Default values ....")
-	err := config.ParseDefault(&myCfg)
+	err = config.ParseDefault(&myCfg)
 	if err != nil {
 		// hmmm ... a real error
 		log.Fatal(err)
@@ -121,8 +131,8 @@ func scanConfiguration() {
 		}
 	}
 
-	// Parse config from Enfironment variables
-	log.Print("Parse config from Enfironment variables ....")
+	// Parse config from Environment variables
+	log.Print("Parse config from Environment variables ....")
 	err = config.ParseEnv(&myCfg)
 	if err != nil {
 		// hmmm ... is not a real error
@@ -134,6 +144,21 @@ func scanConfiguration() {
 	if err != nil {
 		// hmmm ... is not a real error
 		log.Print(err)
+	}
+
+	// set default web context values if missed
+	for idx := 0; idx < len(myCfg.WebCtxs); idx++ {
+		chkVal := reflect.ValueOf(myCfg.WebCtxs[idx])
+		pChkVal := reflect.ValueOf(&myCfg.WebCtxs[idx])
+		defVal := reflect.ValueOf(myDefaultWebCtx)
+		for i := 0; i < chkVal.NumField(); i++ {
+			if chkVal.Field(i).Interface() == "" {
+				fmt.Printf("Before: %s %# v  <-> %# v\n", chkVal.Type().Field(i).Name, chkVal.Field(i).Interface(), defVal.Field(i).Interface())
+				f := pChkVal.Elem().FieldByName(chkVal.Type().Field(i).Name)
+				f.Set(defVal.Field(i))
+				fmt.Printf("After:  %s %# v  <--- %# v\n", chkVal.Type().Field(i).Name, chkVal.Field(i).Interface(), defVal.Field(i).Interface())
+		        }
+		}
 	}
 
 	fmt.Printf("%# v\n", pretty.Formatter(myCfg))

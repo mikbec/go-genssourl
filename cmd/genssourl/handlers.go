@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/fcgi"
+	"time"
 
 	"github.com/icza/gog"
 
@@ -32,34 +34,51 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	log.Print("doRedirect called for '" + r.URL.Path + "' ....")
 
 	// set attributes
-	server_protocol := myCfg.WebCtxs[idx].DstServerProtocol
-	server_host := myCfg.WebCtxs[idx].DstServerHost
-	server_port := myCfg.WebCtxs[idx].DstServerPort
-	server_context := myCfg.WebCtxs[idx].DstServerCtx
-	url_attr_username_key := myCfg.WebCtxs[idx].DstAttrKeyUsername
-	url_attr_timestamp_key := myCfg.WebCtxs[idx].DstAttrKeyTimestamp
-	url_attr_hash_key := myCfg.WebCtxs[idx].DstAttrKeyHash
-	url_attr_id_key := myCfg.WebCtxs[idx].DstAttrKeyId
+	dstServerProtocol := myCfg.WebCtxs[idx].DstServerProtocol
+	dstServerHost := myCfg.WebCtxs[idx].DstServerHost
+	dstServerPort := myCfg.WebCtxs[idx].DstServerPort
+	dstServerCtx := myCfg.WebCtxs[idx].DstServerCtx
+	dstAttrKeyUsername := myCfg.WebCtxs[idx].DstAttrKeyUsername
+	dstAttrKeyTimestamp := myCfg.WebCtxs[idx].DstAttrKeyTimestamp
+	dstAttrKeyHash := myCfg.WebCtxs[idx].DstAttrKeyHash
+	dstAttrKeyId := myCfg.WebCtxs[idx].DstAttrKeyId
+	proxyAttrRemoteUserName := myCfg.WebCtxs[idx].ProxyAttrRemoteUserName
+	dstAttrValId := myCfg.WebCtxs[idx].DstAttrValId
 
-	username_val := myCfg.WebCtxs[idx].DstAttrValUsername
-	//timestamp_val := myCfg.WebCtxs[idx].DstAttrValTimestamp
-	timestamp_val := "2023-11-23T08:15:32Z"
-	id_val := myCfg.WebCtxs[idx].DstAttrValId
-	pub_pem_file := myCfg.WebCtxs[idx].DstServerCertPemFile
-	hash_algo := myCfg.WebCtxs[idx].AlgorithmToUseForHash
-	hash_val, _ := app.HexStringOfEncryptedHashValue(
-		username_val+timestamp_val,
-		hash_algo,
-		pub_pem_file)
+	// set username from config or from request
+	dstAttrValUsername := myCfg.WebCtxs[idx].DstAttrValUsername
+	if dstAttrValUsername == "" {
+		env := fcgi.ProcessEnv(r)
+		dstAttrValUsername, ok = env[proxyAttrRemoteUserName]
+		if ok != true {
+			dstAttrValUsername = ""
+		}
+	}
 
+	// set from config or from now
+	dstAttrValTimestamp := myCfg.WebCtxs[idx].DstAttrValTimestamp
+	if dstAttrValTimestamp == "" {
+		t := time.Now()
+		dstAttrValTimestamp = t.UTC().Format(myCfg.WebCtxs[idx].DstAttrValTimestampFormat)
+	}
+
+	// calculate hash value
+	dstServerCertPemFile := myCfg.WebCtxs[idx].DstServerCertPemFile
+	algorithmToUseForHash := myCfg.WebCtxs[idx].AlgorithmToUseForHash
+	hashVal, _ := app.HexStringOfEncryptedHashValue(
+		dstAttrValUsername+dstAttrValTimestamp,
+		algorithmToUseForHash,
+		dstServerCertPemFile)
+
+	// now generate url string
 	urlString := fmt.Sprintf("%s://%s%s%s%s?%s=%s&%s=%s&%s=%s%s%s",
-		server_protocol,
-		server_host,
-		gog.If(server_port == "", "", ":"), server_port,
-		server_context,
-		url_attr_username_key, username_val,
-		url_attr_timestamp_key, timestamp_val,
-		url_attr_hash_key, hash_val,
-		gog.If(id_val == "", "", "&"+url_attr_id_key+"="), id_val)
+		dstServerProtocol,
+		dstServerHost,
+		gog.If(dstServerPort == "", "", ":"), dstServerPort,
+		dstServerCtx,
+		dstAttrKeyUsername, dstAttrValUsername,
+		dstAttrKeyTimestamp, dstAttrValTimestamp,
+		dstAttrKeyHash, hashVal,
+		gog.If(dstAttrValId == "", "", "&"+dstAttrKeyId+"="), dstAttrValId)
 	w.Write([]byte("Hello from GenPortURL! " + urlString))
 }
