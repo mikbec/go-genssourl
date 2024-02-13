@@ -12,9 +12,21 @@ import (
 	"local/go-genssourl/internal/app"
 )
 
+func errorHandler(w http.ResponseWriter, r *http.Request, status int) {
+	w.WriteHeader(status)
+	if status == http.StatusNotFound {
+		w.Write([]byte("Errro(404): URL '"+r.URL.Path+"' ... resource not found."))
+	}
+}
+
+func returnNotFound(w http.ResponseWriter, r *http.Request) {
+	errorHandler(w, r, http.StatusNotFound)
+}
+
 func showHome(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		//http.NotFound(w, r)
+		errorHandler(w, r, http.StatusNotFound)
 		return
 	}
 
@@ -28,10 +40,13 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	//}
 	idx, ok := webCtxIdxs[r.URL.Path]
 	if ok != true {
-		http.NotFound(w, r)
+		//http.NotFound(w, r)
+		errorHandler(w, r, http.StatusNotFound)
 		return
 	}
-	log.Print("doRedirect called for '" + r.URL.Path + "' ....")
+	if myCfg.CliOpts.OptDebug >= 1 {
+		log.Print("doRedirect called for '" + r.URL.Path + "' ....")
+	}
 
 	// set attributes
 	dstServerProtocol := myCfg.WebCtxs[idx].DstServerProtocol
@@ -48,18 +63,36 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	// set username from config or from request
 	dstAttrValUsername := myCfg.WebCtxs[idx].DstAttrValUsername
 	if dstAttrValUsername == "" {
+		// first try FCGI environment variable
 		env := fcgi.ProcessEnv(r)
 		dstAttrValUsername, ok = env[proxyAttrRemoteUserName]
 		if ok != true {
-			dstAttrValUsername = ""
+		        // the try HTTP header variable
+			dstAttrValUsername = r.Header.Get(proxyAttrRemoteUserName)
 		}
 	}
 
 	// set from config or from now
 	dstAttrValTimestamp := myCfg.WebCtxs[idx].DstAttrValTimestamp
+	dstAttrValTimestampFormat := myCfg.WebCtxs[idx].DstAttrValTimestampFormat
+	dstAttrValTimezone := myCfg.WebCtxs[idx].DstAttrValTimezone
 	if dstAttrValTimestamp == "" {
 		t := time.Now()
-		dstAttrValTimestamp = t.UTC().Format(myCfg.WebCtxs[idx].DstAttrValTimestampFormat)
+		if dstAttrValTimezone == "" || dstAttrValTimezone == "UTC" {
+			// use UTC time
+			dstAttrValTimestamp = t.UTC().Format(dstAttrValTimestampFormat)
+		} else {
+			// Load the time zone location
+			loc, err := time.LoadLocation(dstAttrValTimezone)
+			if err != nil {
+				log.Print("Warning: Could not load time zone '"+ dstAttrValTimezone +"' ... please check config.")
+				dstAttrValTimestamp = ""
+			} else {
+				// Get the current time at a location
+				t := time.Now().In(loc)
+			        dstAttrValTimestamp = t.Format(dstAttrValTimestampFormat)
+			}
+		}
 	}
 
 	// calculate hash value
@@ -80,5 +113,9 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 		dstAttrKeyTimestamp, dstAttrValTimestamp,
 		dstAttrKeyHash, hashVal,
 		gog.If(dstAttrValId == "", "", "&"+dstAttrKeyId+"="), dstAttrValId)
-	w.Write([]byte("Hello from GenPortURL! " + urlString))
+
+	if myCfg.CliOpts.OptDebug >= 3 {
+		w.Write([]byte("GenPortURL is redirecting to:\n" + urlString +"\n"))
+	}
+	http.Redirect(w, r, urlString, http.StatusSeeOther)
 }

@@ -67,6 +67,7 @@ type WebCtx struct {
 	AlgorithmToUseForHash     string `default:"md5"             json:"algorithmToUseForHash" yaml:"algorithmToUseForHash"`
 	DstServerCertPemFile      string `default:"dst-srv.crt.pem" json:"dstServerCertPemFile" yaml:"dstServerCertPemFile"`
 	DstAttrValTimestampFormat string `default:"2006-01-02T15:04:05Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
+	DstAttrValTimezone        string `default:"UTC" json:"dstAttrValTimezone" yaml:"dstAttrValTimezone"`
 	ThisServerCtx             string `default:"/"   json:"thisServerCtx" yaml:"thisServerCtx"`
 	ProxyAttrRemoteUserName   string `default:"REMOTE_USERNAME" json:"proxyAttrRemoteUsername" yaml:"proxyAttrRemoteUsername"`
 }
@@ -123,7 +124,7 @@ func scanConfiguration() {
 
 	// Parse config from configuration file specified by command line
 	if optCfgFile != "" {
-		log.Print("Parse config from configuration file specified by command line option --cfgfile ....")
+		log.Print("Parse config from configuration file '"+ optCfgFile +"' specified by command line option --cfgfile ....")
 		err = config.ParseConfigFile(&myCfg, optCfgFile)
 		if err != nil {
 			// hmmm ... is not a real error
@@ -139,7 +140,7 @@ func scanConfiguration() {
 		log.Print(err)
 	}
 	// Re-Parse config from Command line variables
-	log.Print("Parse config from Command line variables ....")
+	log.Print("Parse config from Command line variables again ....")
 	err = config.ParseCli(&myCfg)
 	if err != nil {
 		// hmmm ... is not a real error
@@ -153,13 +154,25 @@ func scanConfiguration() {
 		defVal := reflect.ValueOf(myDefaultWebCtx)
 		for i := 0; i < chkVal.NumField(); i++ {
 			if chkVal.Field(i).Interface() == "" {
-				fmt.Printf("Before: %s %# v  <-> %# v\n", chkVal.Type().Field(i).Name, chkVal.Field(i).Interface(), defVal.Field(i).Interface())
+				if myCfg.CliOpts.OptDebug >= 4 {
+					fmt.Printf("Before: %s %# v  <-> %# v\n",
+						chkVal.Type().Field(i).Name,
+						chkVal.Field(i).Interface(),
+						defVal.Field(i).Interface())
+				}
 				f := pChkVal.Elem().FieldByName(chkVal.Type().Field(i).Name)
 				f.Set(defVal.Field(i))
-				fmt.Printf("After:  %s %# v  <--- %# v\n", chkVal.Type().Field(i).Name, chkVal.Field(i).Interface(), defVal.Field(i).Interface())
-		        }
+				if myCfg.CliOpts.OptDebug >= 4 {
+					fmt.Printf("After:  %s %# v  <--- %# v\n",
+						chkVal.Type().Field(i).Name,
+						chkVal.Field(i).Interface(),
+						defVal.Field(i).Interface())
+				}
+			}
 		}
 	}
 
-	fmt.Printf("%# v\n", pretty.Formatter(myCfg))
+	if myCfg.CliOpts.OptDebug >= 2 {
+		fmt.Printf("%# v\n", pretty.Formatter(myCfg))
+	}
 }

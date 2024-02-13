@@ -67,11 +67,18 @@ func main() {
 		mux.HandleFunc(str, doRedirect)
 	}
 
+	// Install NotFound for all resources which are not found
+	_, ok := webCtxIdxs["/"]
+	if ok != true {
+		mux.HandleFunc("/", returnNotFound)
+	}
+
 	// start server depending on commandline options
 	// got idea from:
 	//	https://muzzarelli.net/blog/2013/09/how-to-use-go-and-fastcgi/
 	// Run as a local or remote web server
 	if myCfg.CliOpts.OptCfgSvcWebTcp != "" {
+		myCfg.CliOpts.OptCfgSvcFcgiStdIO = false
 		// Run as HTTPS web server
 		if (myCfg.CliOpts.OptCfgSvcWebTcpCertFile != "") && (myCfg.CliOpts.OptCfgSvcWebTcpKeyFile != "") {
 			log.Print("HTTPS server is listening on https://" + myCfg.CliOpts.OptCfgSvcWebTcp)
@@ -89,6 +96,7 @@ func main() {
 
 		// Run as FCGI via TCP
 	} else if myCfg.CliOpts.OptCfgSvcFcgiTcp != "" {
+		myCfg.CliOpts.OptCfgSvcFcgiStdIO = false
 		listener, err := net.Listen("tcp", myCfg.CliOpts.OptCfgSvcFcgiTcp)
 		if err != nil {
 			log.Fatal(err)
@@ -100,6 +108,7 @@ func main() {
 
 		// Run as FCGI via UNIX socket
 	} else if myCfg.CliOpts.OptCfgSvcFcgiUnix != "" {
+		myCfg.CliOpts.OptCfgSvcFcgiStdIO = false
 		log.Print("FCGI server is listening on unix://" + myCfg.CliOpts.OptCfgSvcFcgiUnix)
 		listener, err := net.Listen("unix", myCfg.CliOpts.OptCfgSvcFcgiUnix)
 		if err != nil {
@@ -110,6 +119,7 @@ func main() {
 		err = fcgi.Serve(listener, mux)
 		// Run as FCGI via standard I/O
 	} else {
+		myCfg.CliOpts.OptCfgSvcFcgiStdIO = true
 		log.Print("FCGI server is listening on STD I/O")
 		err = fcgi.Serve(nil, mux)
 	}
