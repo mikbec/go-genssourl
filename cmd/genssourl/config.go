@@ -64,18 +64,19 @@ type WebCtx struct {
 	DstAttrValHash      string `default:""          json:"dstAttrValHash" yaml:"dstAttrValHash"`
 	DstAttrValId        string `default:""          json:"dstAttrValId" yaml:"dstAttrValId"`
 
-	AlgorithmToUseForHash     string `default:"md5"             json:"algorithmToUseForHash" yaml:"algorithmToUseForHash"`
-	DstServerCertPemFile      string `default:"dst-srv.crt.pem" json:"dstServerCertPemFile" yaml:"dstServerCertPemFile"`
-	DstAttrValTimestampFormat string `default:"2006-01-02T15:04:05Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
-	DstAttrValTimezone        string `default:"UTC" json:"dstAttrValTimezone" yaml:"dstAttrValTimezone"`
-	ThisServerCtx             string `default:"/"   json:"thisServerCtx" yaml:"thisServerCtx"`
-	ProxyAttrRemoteUserName   string `default:"REMOTE_USERNAME" json:"proxyAttrRemoteUsername" yaml:"proxyAttrRemoteUsername"`
+	AlgorithmToUseForHash     string   `default:"md5"             json:"algorithmToUseForHash" yaml:"algorithmToUseForHash"`
+	DstServerCertPemFile      string   `default:"dst-srv.crt.pem" json:"dstServerCertPemFile" yaml:"dstServerCertPemFile"`
+	DstAttrValTimestampFormat string   `default:"2006-01-02T15:04:05Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
+	DstAttrValTimezone        string   `default:"UTC" json:"dstAttrValTimezone" yaml:"dstAttrValTimezone"`
+	ThisServerCtx             string   `default:"/"   json:"thisServerCtx" yaml:"thisServerCtx"`
+	ProxyAttrRemoteUsername   string   `default:"REMOTE_USERNAME" json:"proxyAttrRemoteUsername" yaml:"proxyAttrRemoteUsername"`
+	ProxyAttrRemoteUsernames  []string `json:"proxyAttrRemoteUsernames" yaml:"proxyAttrRemoteUsernames"`
 }
 
 type Configuration struct {
-	CliOpts CmdLineOptions `json:"cliopts" yaml:"cliopts"`
+	CliOpts CmdLineOptions `json:"cliOpts" yaml:"cliOpts"`
 	Log     Log            `json:"log" yaml:"log"`
-	WebCtxs []WebCtx       `json:"webctxs" yaml:"webctxs"`
+	WebCtxs []WebCtx       `json:"webCtxs" yaml:"webCtxs"`
 }
 
 var myCfg = Configuration{}
@@ -124,7 +125,7 @@ func scanConfiguration() {
 
 	// Parse config from configuration file specified by command line
 	if optCfgFile != "" {
-		log.Print("Parse config from configuration file '"+ optCfgFile +"' specified by command line option --cfgfile ....")
+		log.Print("Parse config from configuration file '" + optCfgFile + "' specified by command line option --cfgfile ....")
 		err = config.ParseConfigFile(&myCfg, optCfgFile)
 		if err != nil {
 			// hmmm ... is not a real error

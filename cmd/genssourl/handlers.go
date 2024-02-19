@@ -15,7 +15,7 @@ import (
 func errorHandler(w http.ResponseWriter, r *http.Request, status int) {
 	w.WriteHeader(status)
 	if status == http.StatusNotFound {
-		w.Write([]byte("Errro(404): URL '"+r.URL.Path+"' ... resource not found."))
+		w.Write([]byte("Errro(404): URL '" + r.URL.Path + "' ... resource not found."))
 	}
 }
 
@@ -57,19 +57,44 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	dstAttrKeyTimestamp := myCfg.WebCtxs[idx].DstAttrKeyTimestamp
 	dstAttrKeyHash := myCfg.WebCtxs[idx].DstAttrKeyHash
 	dstAttrKeyId := myCfg.WebCtxs[idx].DstAttrKeyId
-	proxyAttrRemoteUserName := myCfg.WebCtxs[idx].ProxyAttrRemoteUserName
+	proxyAttrRemoteUsername := myCfg.WebCtxs[idx].ProxyAttrRemoteUsername
 	dstAttrValId := myCfg.WebCtxs[idx].DstAttrValId
 
 	// set username from config or from request
 	dstAttrValUsername := myCfg.WebCtxs[idx].DstAttrValUsername
-	if dstAttrValUsername == "" {
+	if dstAttrValUsername == "" && myCfg.WebCtxs[idx].ProxyAttrRemoteUsernames != nil {
+		if myCfg.CliOpts.OptDebug >= 2 {
+			log.Print("Trying ProxyAttrRemoteUsernames array ....")
+		}
+		for _, unVar := range myCfg.WebCtxs[idx].ProxyAttrRemoteUsernames {
+			if myCfg.CliOpts.OptDebug >= 2 {
+				log.Print("Trying ProxyAttrRemoteUsernames variable " + unVar + "....")
+			}
+			// first try FCGI environment variable
+			env := fcgi.ProcessEnv(r)
+			dstAttrValUsername, ok = env[unVar]
+			if ok != true {
+				// the try HTTP header variable
+				dstAttrValUsername = r.Header.Get(unVar)
+			}
+			if dstAttrValUsername != "" {
+				break
+			}
+		}
+	} else if dstAttrValUsername == "" && proxyAttrRemoteUsername != "" {
+		if myCfg.CliOpts.OptDebug >= 2 {
+			log.Print("Trying ProxyAttrRemoteUsername variable " + proxyAttrRemoteUsername + " ....")
+		}
 		// first try FCGI environment variable
 		env := fcgi.ProcessEnv(r)
-		dstAttrValUsername, ok = env[proxyAttrRemoteUserName]
+		dstAttrValUsername, ok = env[proxyAttrRemoteUsername]
 		if ok != true {
-		        // the try HTTP header variable
-			dstAttrValUsername = r.Header.Get(proxyAttrRemoteUserName)
+			// the try HTTP header variable
+			dstAttrValUsername = r.Header.Get(proxyAttrRemoteUsername)
 		}
+	}
+	if dstAttrValUsername == "" {
+		log.Print("Warning: Could not find any authenticated username ... please check config for proxyAttrRemoteUsername or proxyAttrRemoteUsernames[].")
 	}
 
 	// set from config or from now
@@ -85,12 +110,12 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 			// Load the time zone location
 			loc, err := time.LoadLocation(dstAttrValTimezone)
 			if err != nil {
-				log.Print("Warning: Could not load time zone '"+ dstAttrValTimezone +"' ... please check config.")
+				log.Print("Warning: Could not load time zone '" + dstAttrValTimezone + "' ... please check config.")
 				dstAttrValTimestamp = ""
 			} else {
 				// Get the current time at a location
 				t := time.Now().In(loc)
-			        dstAttrValTimestamp = t.Format(dstAttrValTimestampFormat)
+				dstAttrValTimestamp = t.Format(dstAttrValTimestampFormat)
 			}
 		}
 	}
@@ -115,7 +140,7 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 		gog.If(dstAttrValId == "", "", "&"+dstAttrKeyId+"="), dstAttrValId)
 
 	if myCfg.CliOpts.OptDebug >= 3 {
-		w.Write([]byte("GenPortURL is redirecting to:\n" + urlString +"\n"))
+		w.Write([]byte("GenPortURL is redirecting to:\n" + urlString + "\n"))
 	}
 	http.Redirect(w, r, urlString, http.StatusSeeOther)
 }
