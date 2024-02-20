@@ -22,8 +22,6 @@ type CmdLineOptions struct {
 	OptCfgSvcFcgiStdIO      bool   `default:"true" cli:"fstdio Use the FCGI server listen on standard I/O."`
 
 	OptCfgFile string `default:""   cli:"cfgfile The config file to use."`
-	OptDebug   int    `default:"0"  cli:"debug The debug level to use, 0 means no debug."`
-	OptHelp    bool   `cli:"help Print this message and exit."`
 }
 
 // program log stuff
@@ -107,12 +105,6 @@ func scanConfiguration() {
 		log.Print(err)
 	}
 	var optCfgFile string = myCfg.CliOpts.OptCfgFile
-	//var optDebug int = myCfg.OptDebug
-	//var optHelp bool = myCfg.OptHelp
-	//if optHelp == true {
-	//      flag.Usage()
-	//      os.Exit(0)
-	//}
 
 	// Parse config for default configuration file
 	//   -> first found of config.json and config.yaml
