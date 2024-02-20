@@ -7,7 +7,7 @@ Weiterleitungs-URL zu generieren, die folgenden Aufbau hat:
 
         <sever_protocol>://<server_host>[:<server_port>]/[<server_context>]?<url_attr_username_key>=username&<url_attr_timestamp_key>=timestamp&<url_attr_hash_key>=hash_val[&<url_attr_id_key>=<id_val>]
 
-Wenn ein Nutzer sich bspw.
+__Ein Beispiel:__ Wenn sich ein Nutzer
 
 * als __user1__
 * mit E-Mail-Adresse __user1@my.domain__
