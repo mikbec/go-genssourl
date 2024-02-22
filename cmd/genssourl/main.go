@@ -24,6 +24,13 @@ func main() {
 		return
 	}
 
+	// print configuration as YAML if wanted
+	if myCfg.CliOpts.OptCfgAsYAML == true {
+		printCfgAsYAML()
+		defer func() { os.Exit(0) }()
+		return
+	}
+
 	// get a new mux
 	mux := http.NewServeMux()
 

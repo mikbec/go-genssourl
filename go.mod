@@ -6,6 +6,7 @@ require (
 	github.com/eschao/config v0.1.0
 	github.com/icza/gog v0.0.0-20230509085756-00e776132a34
 	github.com/kr/pretty v0.3.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

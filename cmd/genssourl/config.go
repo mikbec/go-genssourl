@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/eschao/config"
 	"github.com/kr/pretty"
+	"gopkg.in/yaml.v3"
 	"io"
 	"log"
 	"reflect"
@@ -26,6 +27,7 @@ type CmdLineOptions struct {
 
 	OptCfgFile   string `default:""       cli:"cfgfile The config file to use."`
 	OptCfgAsJSON bool   `default:"false"  cli:"json Print config as JSON."`
+	OptCfgAsYAML bool   `default:"false"  cli:"yaml Print config as YAML."`
 	OptDebug     int    `default:"0"      cli:"debug The debug level to use for command line, 0 means no debug."`
 }
 
@@ -185,6 +187,25 @@ func scanConfiguration() {
 	return
 }
 
+// prepare a configuration structur for output
+func prepareCfg4Output() Configuration4Output {
+	var myCfg4Output = Configuration4Output{}
+
+	err := config.ParseDefault(&myCfg4Output)
+	if err != nil {
+		// hmmm ... a real error
+		log.Fatal(err)
+	}
+
+	if len(myCfg.WebCtxs) > 0 {
+		myCfg4Output.WebCtxs = myCfg.WebCtxs
+	} else {
+		myCfg4Output.WebCtxs = append(myCfg4Output.WebCtxs, myDefaultWebCtx)
+	}
+
+	return myCfg4Output
+}
+
 // got this function from
 //
 //	https://gosamples.dev/pretty-print-json/
@@ -199,25 +220,27 @@ func prettyEncode(data interface{}, out io.Writer) error {
 
 func printCfgAsJSON() {
 	var buffer bytes.Buffer
-	var myCfg4Output = Configuration4Output{}
+	var myCfg4Output = prepareCfg4Output()
 
-	err := config.ParseDefault(&myCfg4Output)
-	if err != nil {
-		// hmmm ... a real error
-		log.Fatal(err)
-	}
-
-	if len(myCfg.WebCtxs) > 0 {
-		myCfg4Output.WebCtxs = myCfg.WebCtxs
-	} else {
-		myCfg4Output.WebCtxs = append(myCfg4Output.WebCtxs, myDefaultWebCtx)
-	}
-	err = prettyEncode(&myCfg4Output, &buffer)
+	err := prettyEncode(&myCfg4Output, &buffer)
 	if err != nil {
 		// hmmm ... a real error
 		log.Fatal(err)
 	}
 	fmt.Println(buffer.String())
+
+	return
+}
+
+func printCfgAsYAML() {
+	var myCfg4Output = prepareCfg4Output()
+
+	data, err := yaml.Marshal(myCfg4Output)
+	if err != nil {
+		// hmmm ... a real error
+		log.Fatal(err)
+	}
+	fmt.Println(string(data))
 
 	return
 }
