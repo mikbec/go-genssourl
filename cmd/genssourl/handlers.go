@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/fcgi"
+	"net/url"
 	"time"
 
 	"github.com/icza/gog"
@@ -101,6 +102,7 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	dstAttrValTimestamp := myCfg.WebCtxs[idx].DstAttrValTimestamp
 	dstAttrValTimestampFormat := myCfg.WebCtxs[idx].DstAttrValTimestampFormat
 	dstAttrValTimezone := myCfg.WebCtxs[idx].DstAttrValTimezone
+	dstDoNotDoParameterURLEncoding := myCfg.WebCtxs[idx].DstDoNotDoParameterURLEncoding
 	if dstAttrValTimestamp == "" {
 		t := time.Now()
 		if dstAttrValTimezone == "" || dstAttrValTimezone == "UTC" {
@@ -123,24 +125,67 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	// calculate hash value
 	dstServerCertPemFile := myCfg.WebCtxs[idx].DstServerCertPemFile
 	algorithmToUseForHash := myCfg.WebCtxs[idx].AlgorithmToUseForHash
-	hashVal, _ := app.HexStringOfEncryptedHashValue(
+	dstAttrValHash, _ := app.HexStringOfEncryptedHashValue(
 		dstAttrValUsername+dstAttrValTimestamp,
 		algorithmToUseForHash,
 		dstServerCertPemFile)
 
-	// now generate url string
-	urlString := fmt.Sprintf("%s://%s%s%s%s?%s=%s&%s=%s&%s=%s%s%s",
+	// do URL encoding
+	// first generate "proto://server[:port]"
+	redirectURLString := fmt.Sprintf("%s://%s%s%s",
 		dstServerProtocol,
 		dstServerHost,
-		gog.If(dstServerPort == "", "", ":"), dstServerPort,
-		dstServerPath,
-		dstAttrKeyUsername, dstAttrValUsername,
-		dstAttrKeyTimestamp, dstAttrValTimestamp,
-		dstAttrKeyHash, hashVal,
-		gog.If(dstAttrValId == "", "", "&"+dstAttrKeyId+"="), dstAttrValId)
+		gog.If(dstServerPort == "", "", ":"), dstServerPort)
+	redirectURL, err := url.Parse(redirectURLString)
+	if err != nil {
+		log.Print("Error: Malformed URL: " + err.Error() + " ... please check config.")
+		return
+	}
+
+	// add optional path
+	// (encoding of not allowed characters should be done automatically)
+	redirectURL.Path += dstServerPath
+
+	// now prepare our parameters
+	redirectURLParams := url.Values{}
+	if dstAttrKeyUsername != "" {
+		redirectURLParams.Add(
+			dstAttrKeyUsername,
+			gog.If(dstAttrValUsername == "", "unknown-username", dstAttrValUsername))
+	}
+	if dstDoNotDoParameterURLEncoding == true {
+		// grrr ... we have to do by our own
+		redirectURL.RawQuery = redirectURLParams.Encode()
+
+		// we use what we get till now
+		redirectURLString = redirectURL.String()
+
+		// and add all other parameters by ourself
+		redirectURLString = fmt.Sprintf("%s&%s=%s&%s=%s%s%s",
+			redirectURLString,
+			dstAttrKeyTimestamp, dstAttrValTimestamp,
+			dstAttrKeyHash, dstAttrValHash,
+			gog.If(dstAttrValId == "", "", "&"+dstAttrKeyId+"="), dstAttrValId)
+	} else {
+		if dstAttrKeyTimestamp != "" {
+			redirectURLParams.Add(dstAttrKeyTimestamp, dstAttrValTimestamp)
+		}
+		if dstAttrKeyHash != "" {
+			redirectURLParams.Add(dstAttrKeyHash, dstAttrValHash)
+		}
+		if dstAttrValId != "" {
+			redirectURLParams.Add(dstAttrKeyId, dstAttrValId)
+		}
+
+		// add all the query parameters to the URL
+		redirectURL.RawQuery = redirectURLParams.Encode()
+
+		// now get the whole redirect URL string
+		redirectURLString = redirectURL.String()
+	}
 
 	if myCfg.CliOpts.OptDebug >= 3 {
-		w.Write([]byte("GenPortURL is redirecting to:\n" + urlString + "\n"))
+		w.Write([]byte("GenPortURL is redirecting to:\n" + redirectURLString + "\n"))
 	}
-	http.Redirect(w, r, urlString, http.StatusSeeOther)
+	http.Redirect(w, r, redirectURLString, http.StatusSeeOther)
 }

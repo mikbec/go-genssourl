@@ -63,13 +63,14 @@ type WebCtx struct {
 	DstAttrValHash      string `default:""          json:"dstAttrValHash" yaml:"dstAttrValHash"`
 	DstAttrValId        string `default:""          json:"dstAttrValId" yaml:"dstAttrValId"`
 
-	AlgorithmToUseForHash     string   `default:"md5"             json:"algorithmToUseForHash" yaml:"algorithmToUseForHash"`
-	DstServerCertPemFile      string   `default:"dst-srv.crt.pem" json:"dstServerCertPemFile" yaml:"dstServerCertPemFile"`
-	DstAttrValTimestampFormat string   `default:"2006-01-02T15:04:05Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
-	DstAttrValTimezone        string   `default:"UTC" json:"dstAttrValTimezone" yaml:"dstAttrValTimezone"`
-	ThisServerPath            string   `default:"/"   json:"thisServerPath" yaml:"thisServerPath"`
-	ProxyAttrRemoteUsername   string   `default:"REMOTE_USERNAME" json:"proxyAttrRemoteUsername" yaml:"proxyAttrRemoteUsername"`
-	ProxyAttrRemoteUsernames  []string `json:"proxyAttrRemoteUsernames" yaml:"proxyAttrRemoteUsernames"`
+	AlgorithmToUseForHash          string   `default:"md5"             json:"algorithmToUseForHash" yaml:"algorithmToUseForHash"`
+	DstServerCertPemFile           string   `default:"dst-srv.crt.pem" json:"dstServerCertPemFile" yaml:"dstServerCertPemFile"`
+	DstAttrValTimestampFormat      string   `default:"2006-01-02T15:04:05Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
+	DstAttrValTimezone             string   `default:"UTC"             json:"dstAttrValTimezone" yaml:"dstAttrValTimezone"`
+	DstDoNotDoParameterURLEncoding bool     `default:"false"          json:"dstDoNotDoParameterURLEncoding" yaml:"dstDoNotDoParameterURLEncoding"`
+	ThisServerPath                 string   `default:"/"               json:"thisServerPath" yaml:"thisServerPath"`
+	ProxyAttrRemoteUsername        string   `default:"REMOTE_USERNAME" json:"proxyAttrRemoteUsername" yaml:"proxyAttrRemoteUsername"`
+	ProxyAttrRemoteUsernames       []string `json:"proxyAttrRemoteUsernames" yaml:"proxyAttrRemoteUsernames"`
 }
 
 type Configuration struct {
