@@ -63,7 +63,9 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 
 	// set username from config or from request
 	dstAttrValUsername := myCfg.WebCtxs[idx].DstAttrValUsername
-	if dstAttrValUsername == "" && myCfg.WebCtxs[idx].ProxyAttrRemoteUsernames != nil {
+	if dstAttrValUsername == "" &&
+		myCfg.WebCtxs[idx].ProxyAttrRemoteUsernames != nil &&
+		len(myCfg.WebCtxs[idx].ProxyAttrRemoteUsernames) > 0 {
 		if myCfg.CliOpts.OptDebug >= 2 {
 			log.Print("Trying ProxyAttrRemoteUsernames array ....")
 		}
@@ -95,7 +97,7 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if dstAttrValUsername == "" {
-		log.Print("Warning: Could not find any authenticated username ... please check config for proxyAttrRemoteUsername or proxyAttrRemoteUsernames[].")
+		log.Print("Warning: Could not find any authenticated username ... please check config for proxyAttrRemoteUsernames[] or proxyAttrRemoteUsername.")
 	}
 
 	// set from config or from now
