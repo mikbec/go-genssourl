@@ -17,6 +17,13 @@ func main() {
 	// first scan our Configuration
 	scanConfiguration()
 
+	// print configuration as JSON if wanted
+	if myCfg.CliOpts.OptCfgAsJSON == true {
+		printCfgAsJSON()
+		defer func() { os.Exit(0) }()
+		return
+	}
+
 	// get a new mux
 	mux := http.NewServeMux()
 

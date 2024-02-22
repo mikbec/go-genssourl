@@ -5,9 +5,12 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/eschao/config"
 	"github.com/kr/pretty"
+	"io"
 	"log"
 	"reflect"
 )
@@ -21,14 +24,17 @@ type CmdLineOptions struct {
 	OptCfgSvcFcgiUnix       string `default:""     cli:"funix The FCGI server Unix socket name to use."`
 	OptCfgSvcFcgiStdIO      bool   `default:"true" cli:"fstdio Use the FCGI server listen on standard I/O."`
 
-	OptCfgFile string `default:""   cli:"cfgfile The config file to use."`
-	OptDebug   int    `default:"0"  cli:"debug The debug level to use, 0 means no debug."`
+	OptCfgFile   string `default:""       cli:"cfgfile The config file to use."`
+	OptCfgAsJSON bool   `default:"false"  cli:"json Print config as JSON."`
+	OptDebug     int    `default:"0"      cli:"debug The debug level to use for command line, 0 means no debug."`
 }
 
 // program log stuff
+//
+//	currently not implemented
 type Log struct {
-	Path  string `default:"logs"`
-	Level string `default:"debug"`
+	LogPath  string `default:"logs"          json:"logPath" yaml:"logPath"`
+	LogLevel string `default:"debug"         json:"logLevel" yaml:"logLevel"`
 }
 
 // web and service context
@@ -77,6 +83,11 @@ type Configuration struct {
 	CliOpts CmdLineOptions `json:"cliOpts" yaml:"cliOpts"`
 	Log     Log            `json:"log" yaml:"log"`
 	WebCtxs []WebCtx       `json:"webCtxs" yaml:"webCtxs"`
+}
+
+type Configuration4Output struct {
+	Log     Log      `json:"log" yaml:"log"`
+	WebCtxs []WebCtx `json:"webCtxs" yaml:"webCtxs"`
 }
 
 var myCfg = Configuration{}
@@ -170,4 +181,43 @@ func scanConfiguration() {
 	if myCfg.CliOpts.OptDebug >= 2 {
 		fmt.Printf("%# v\n", pretty.Formatter(myCfg))
 	}
+
+	return
+}
+
+// got this function from
+//
+//	https://gosamples.dev/pretty-print-json/
+func prettyEncode(data interface{}, out io.Writer) error {
+	enc := json.NewEncoder(out)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		return err
+	}
+	return nil
+}
+
+func printCfgAsJSON() {
+	var buffer bytes.Buffer
+	var myCfg4Output = Configuration4Output{}
+
+	err := config.ParseDefault(&myCfg4Output)
+	if err != nil {
+		// hmmm ... a real error
+		log.Fatal(err)
+	}
+
+	if len(myCfg.WebCtxs) > 0 {
+		myCfg4Output.WebCtxs = myCfg.WebCtxs
+	} else {
+		myCfg4Output.WebCtxs = append(myCfg4Output.WebCtxs, myDefaultWebCtx)
+	}
+	err = prettyEncode(&myCfg4Output, &buffer)
+	if err != nil {
+		// hmmm ... a real error
+		log.Fatal(err)
+	}
+	fmt.Println(buffer.String())
+
+	return
 }
