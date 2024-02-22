@@ -5,7 +5,7 @@ als Backend eines Web-Servers (wie bspw. Apache HTTPD oder NGINX) eingesetzt
 werden kann, um anhand des durch den Web-Server authentifizierten Nutzers eine
 Weiterleitungs-URL zu generieren, die folgenden Aufbau hat:
 
-        <sever_protocol>://<server_host>[:<server_port>]/[<server_context>]?<url_attr_username_key>=username&<url_attr_timestamp_key>=timestamp&<url_attr_hash_key>=hash_val[&<url_attr_id_key>=<id_val>]
+        <sever_protocol>://<server_host>[:<server_port>]/[<server_path>]?<url_attr_username_key>=username&<url_attr_timestamp_key>=timestamp&<url_attr_hash_key>=hash_val[&<url_attr_id_key>=<id_val>]
 
 __Ein Beispiel:__ Wenn sich ein Nutzer
 
@@ -34,8 +34,8 @@ Die Bedeutung der einzelnen URL-Parameter:
 * __server_port__
     * Port des Dienstes auf dem Zielserver
     * optionaler Parameter
-* __server_context__
-    * Kontext des Zielservers
+* __server_path__
+    * Pfad in der URL des Zielservers
     * optionaler Parameter
 * __url_attr_username_key__
     * Name des Parameters, der den (durch den Web-Server) authentifizierten Accountnamen enthalten soll

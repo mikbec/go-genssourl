@@ -22,6 +22,7 @@ type CmdLineOptions struct {
 	OptCfgSvcFcgiStdIO      bool   `default:"true" cli:"fstdio Use the FCGI server listen on standard I/O."`
 
 	OptCfgFile string `default:""   cli:"cfgfile The config file to use."`
+	OptDebug   int    `default:"0"  cli:"debug The debug level to use, 0 means no debug."`
 }
 
 // program log stuff
@@ -36,7 +37,7 @@ type WebCtx struct {
 	// server_protocol := "https"
 	// server_host := "localhost"
 	// server_port := "5677"
-	// server_context := "bla"
+	// server_path := "bla"
 	// url_attr_username_key := "user"
 	// url_attr_timestamp_key := "ts"
 	// url_attr_hash_key := "hash"
@@ -50,7 +51,7 @@ type WebCtx struct {
 	DstServerProtocol string `default:"https"     json:"dstServerProtocol" yaml:"dstServerProtocol"`
 	DstServerHost     string `default:"localhost" json:"dstServerHost" yaml:"dstServerHost"`
 	DstServerPort     string `default:""          json:"dstServerPort" yaml:"dstServerPort"`
-	DstServerCtx      string `default:""          json:"dstServerCtx" yaml:"dstServerCtx"`
+	DstServerPath     string `default:""          json:"dstServerPath" yaml:"dstServerPath"`
 
 	DstAttrKeyUsername  string `default:"user"      json:"dstAttrKeyUsername" yaml:"dstAttrKeyUsername"`
 	DstAttrKeyTimestamp string `default:"ts"        json:"dstAttrKeyTimestamp" yaml:"dstAttrKeyTimestamp"`
@@ -66,7 +67,7 @@ type WebCtx struct {
 	DstServerCertPemFile      string   `default:"dst-srv.crt.pem" json:"dstServerCertPemFile" yaml:"dstServerCertPemFile"`
 	DstAttrValTimestampFormat string   `default:"2006-01-02T15:04:05Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
 	DstAttrValTimezone        string   `default:"UTC" json:"dstAttrValTimezone" yaml:"dstAttrValTimezone"`
-	ThisServerCtx             string   `default:"/"   json:"thisServerCtx" yaml:"thisServerCtx"`
+	ThisServerPath            string   `default:"/"   json:"thisServerPath" yaml:"thisServerPath"`
 	ProxyAttrRemoteUsername   string   `default:"REMOTE_USERNAME" json:"proxyAttrRemoteUsername" yaml:"proxyAttrRemoteUsername"`
 	ProxyAttrRemoteUsernames  []string `json:"proxyAttrRemoteUsernames" yaml:"proxyAttrRemoteUsernames"`
 }

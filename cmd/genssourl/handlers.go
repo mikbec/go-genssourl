@@ -52,7 +52,7 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	dstServerProtocol := myCfg.WebCtxs[idx].DstServerProtocol
 	dstServerHost := myCfg.WebCtxs[idx].DstServerHost
 	dstServerPort := myCfg.WebCtxs[idx].DstServerPort
-	dstServerCtx := myCfg.WebCtxs[idx].DstServerCtx
+	dstServerPath := myCfg.WebCtxs[idx].DstServerPath
 	dstAttrKeyUsername := myCfg.WebCtxs[idx].DstAttrKeyUsername
 	dstAttrKeyTimestamp := myCfg.WebCtxs[idx].DstAttrKeyTimestamp
 	dstAttrKeyHash := myCfg.WebCtxs[idx].DstAttrKeyHash
@@ -133,7 +133,7 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 		dstServerProtocol,
 		dstServerHost,
 		gog.If(dstServerPort == "", "", ":"), dstServerPort,
-		dstServerCtx,
+		dstServerPath,
 		dstAttrKeyUsername, dstAttrValUsername,
 		dstAttrKeyTimestamp, dstAttrValTimestamp,
 		dstAttrKeyHash, hashVal,

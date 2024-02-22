@@ -54,7 +54,7 @@ func main() {
 	//mux.HandleFunc("/", doRedirect)
 	//mux.HandleFunc("/home", showHome)
 	for idx := 0; idx < len(myCfg.WebCtxs); idx++ {
-		str := myCfg.WebCtxs[idx].ThisServerCtx
+		str := myCfg.WebCtxs[idx].ThisServerPath
 		if str == "" {
 			str = "/"
 		}

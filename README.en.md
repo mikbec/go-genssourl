@@ -5,7 +5,7 @@ can be used as a backend of a web server (such as Apache HTTPD or NGINX) to
 provide a generate redirect URL, which is based on data of a user, whose was
 authenticated by the web server. This URL has the following structure:
 
-        <sever_protocol>://<server_host>[:<server_port>]/[<server_context>]?<url_attr_username_key>=username&<url_attr_timestamp_key>=timestamp&<url_attr_hash_key>=hash_val[&<url_attr_id_key>=<id_val>]
+        <sever_protocol>://<server_host>[:<server_port>]/[<server_path>]?<url_attr_username_key>=username&<url_attr_timestamp_key>=timestamp&<url_attr_hash_key>=hash_val[&<url_attr_id_key>=<id_val>]
 
 __An example:__ If a user has autheticated themself
 
@@ -34,8 +34,8 @@ The meaning of the individual parameters:
 * __server_port__
     * port of the services to connect to on the destination host
     * optional parameter
-* __server_context__
-    * web context (or path component in URL) on the destination host
+* __server_path__
+    * web path component in URL on the destination host
     * optional parameter
 * __url_attr_username_key__
     * name of the parameter, which should contain the value of the username autheticated by our local web proxy
