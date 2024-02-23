@@ -2,12 +2,13 @@
 
 In the current version the __go-genssourl__ service is a web service that
 can be used as a backend of a web server (such as Apache HTTPD or NGINX) to
-provide a generate redirect URL, which is based on data of a user, whose was
-authenticated by the web server. This URL has the following structure:
+provide a generated redirect URL. This URL includes a hash as a parameter,
+which is based on data of a user, whose was authenticated by the web server.
+The generate URL may has the following structure:
 
         <sever_protocol>://<server_host>[:<server_port>]/[<server_path>]?<url_attr_username_key>=username&<url_attr_timestamp_key>=timestamp&<url_attr_hash_key>=hash_val[&<url_attr_id_key>=<id_val>]
 
-__An example:__ If a user has autheticated themself
+__An example:__ If a user has authenticated themself
 
 * as __user1__
 * with email address  __user1@my.domain__
