@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/fcgi"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"local/go-genssourl/ui"
@@ -31,18 +32,40 @@ func main() {
 		return
 	}
 
+	webAppRoot := filepath.Join(".", "webapp")
+	if myCfg.CliOpts.OptWebAppDirRoot != "" {
+		webAppRoot = filepath.Join(myCfg.CliOpts.OptWebAppDirRoot, "")
+	}
+
+	// copy embedded FS data
+	if myCfg.CliOpts.OptCopyEmbeddedFS == true {
+		defer func() { os.Exit(0) }()
+		if myCfg.CliOpts.OptDebug >= 2 {
+			ui.ListEmbeddedDir(&ui.Content_static)
+		}
+		err := ui.CopyEmbeddedDirWithoutDst(&ui.Content_static, webAppRoot)
+		if err != nil {
+			return
+		}
+		if myCfg.CliOpts.OptDebug >= 2 {
+			ui.ListEmbeddedDir(&ui.Content_templates)
+		}
+		ui.CopyEmbeddedDirWithDst(&ui.Content_templates, webAppRoot)
+		return
+	}
+
 	// get a new mux
 	mux := http.NewServeMux()
 
-	// decide if we use our internal or extarnal pages/templates
-	path_to_static := "./ui/static/"
-	_, err := os.Stat(path_to_static)
+	// decide if we use our internal or external pages/templates
+	pathTo_static := filepath.Join(webAppRoot, "static")
+	_, err := os.Stat(pathTo_static)
 	if err == nil {
-		// Create a file server which serves files out of the "./ui/static" directory.
-		// Note that the path given to the http.Dir function is relative to the project
+		// Create a file server which serves files out of the "./webapp/static" directory.
+		// Note that the path given to the http.Dir function may be relative to the project
 		// directory root.
-		log.Print("Trying to use external path ...")
-		fileServer := http.FileServer(http.Dir(path_to_static))
+		log.Print("Trying to use external path \"" + webAppRoot + "\" ...")
+		fileServer := http.FileServer(http.Dir(pathTo_static))
 
 		// Use the mux.Handle() function to register the file server as the handler for
 		// all URL paths that start with "/static/". For matching paths, we strip the

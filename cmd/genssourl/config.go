@@ -25,10 +25,12 @@ type CmdLineOptions struct {
 	OptCfgSvcFcgiUnix       string `default:""     cli:"funix The FCGI server Unix socket name to use."`
 	OptCfgSvcFcgiStdIO      bool   `default:"true" cli:"fstdio Use the FCGI server listen on standard I/O."`
 
-	OptCfgFile   string `default:""       cli:"cfgfile The config file to use."`
-	OptCfgAsJSON bool   `default:"false"  cli:"json Print config as JSON."`
-	OptCfgAsYAML bool   `default:"false"  cli:"yaml Print config as YAML."`
-	OptDebug     int    `default:"0"      cli:"debug The debug level to use for command line, 0 means no debug."`
+	OptCfgFile        string `default:""       cli:"cfgfile The config file to use."`
+	OptCfgAsJSON      bool   `default:"false"  cli:"json Print config as JSON."`
+	OptCfgAsYAML      bool   `default:"false"  cli:"yaml Print config as YAML."`
+	OptCopyEmbeddedFS bool   `default:"false"  cli:"copyefs Copy content of embedded filesystem."`
+	OptDebug          int    `default:"0"      cli:"debug The debug level to use for command line, 0 means no debug."`
+	OptWebAppDirRoot  string `default:""       cli:"webappdir The directory in which the webapp files are located."`
 }
 
 // program log stuff
