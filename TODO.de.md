@@ -4,10 +4,10 @@
 * Logging in Files inklusive Rotation nach bestimmter Größe
 * Nutzung von Templates, damit auch Copy Embedded für Files in "/templates/"
   Sinn macht
-* CLI Option "--syslog", damit Datum und Uhrzeit nicht zweimal ausgegeben
-  werden
 
 # DONE
+* CLI Option "--syslog", damit Datum und Uhrzeit nicht zweimal ausgegeben
+  werden
 * Beenden von Copy Embedded FS (mit Option für Ziel-Verzeichnis oder ".") für
   "/static/" Files
 * README.md mit Install/Compile Anweisungen

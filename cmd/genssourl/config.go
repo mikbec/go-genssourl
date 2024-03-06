@@ -30,6 +30,7 @@ type CmdLineOptions struct {
 	OptCfgAsYAML      bool   `default:"false"  cli:"yaml Print config as YAML."`
 	OptCopyEmbeddedFS bool   `default:"false"  cli:"copyefs Copy content of embedded filesystem."`
 	OptDebug          int    `default:"0"      cli:"debug The debug level to use for command line, 0 means no debug."`
+	OptSyslog         bool   `default:"true"   cli:"syslog Make log messages syslog compatible."`
 	OptWebAppDirRoot  string `default:""       cli:"webappdir The directory in which the webapp files are located."`
 }
 
@@ -99,7 +100,7 @@ var myDefaultWebCtx = WebCtx{}
 
 func scanConfiguration() {
 	// Parse config for Default web context and to initialize configuration structure.
-	log.Print("Parse config for Default web context values ....")
+	//log.Print("Parse config for Default web context values ....")
 	err := config.ParseDefault(&myDefaultWebCtx)
 	if err != nil {
 		// hmmm ... a real error
@@ -107,7 +108,7 @@ func scanConfiguration() {
 	}
 
 	// Parse config for Default values and to initialize configuration structure.
-	log.Print("Parse config for Default values ....")
+	//log.Print("Parse config for Default values ....")
 	err = config.ParseDefault(&myCfg)
 	if err != nil {
 		// hmmm ... a real error
@@ -115,7 +116,7 @@ func scanConfiguration() {
 	}
 
 	// Parse config from Command line variables the first time.
-	log.Print("Parse config from Command line variables ....")
+	//log.Print("Parse config from Command line variables ....")
 	err = config.ParseCli(&myCfg)
 	if err != nil {
 		// hmmm ... is not a real error
@@ -123,9 +124,14 @@ func scanConfiguration() {
 	}
 	var optCfgFile string = myCfg.CliOpts.OptCfgFile
 
+	// Remove Date and Time if we run under syslog
+	if myCfg.CliOpts.OptSyslog == true {
+		log.SetFlags(0)
+	}
+
 	// Parse config for default configuration file
 	//   -> first found of config.json and config.yaml
-	log.Print("Parse config for default configuration file (config.json or config.yaml) ....")
+	log.Print("Will try to parse config for default configuration file (config.json or config.yaml) ....")
 	err = config.ParseConfigFile(&myCfg, "")
 	if err != nil {
 		// hmmm ... is not a real error
