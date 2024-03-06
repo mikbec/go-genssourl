@@ -1,0 +1,27 @@
+#
+# put this file into "/lib/systemd/system/" as "go-genssourl.service" like
+#   /lib/systemd/system/go-genssourl.service
+#
+[Unit]
+Description=A go-genssourl web service to generate SSO URLs.
+After=network.target remote-fs.target nss-lookup.target 
+
+[Service]
+Type=simple
+
+# run under this user/group
+User=nobody
+Group=nobody
+
+# 
+EnvironmentFile=/etc/sysconfig/go-genssourl
+
+# 
+ExecStart=/usr/sbin/go-genssourl $GO_GENSSOURL_OPTS
+
+Restart=on-failure
+RestartSec=10
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
