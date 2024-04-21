@@ -75,7 +75,8 @@ type WebCtx struct {
 	DstAttrValId        string `default:""          json:"dstAttrValId" yaml:"dstAttrValId"`
 
 	AlgorithmToUseForHash          string   `default:"md5"             json:"algorithmToUseForHash" yaml:"algorithmToUseForHash"`
-	DstServerCertPemFile           string   `default:"dst-srv.crt.pem" json:"dstServerCertPemFile" yaml:"dstServerCertPemFile"`
+	DstServerPemFile               string   `default:"dst-srv.crt.pem" json:"dstServerPemFile" yaml:"dstServerPemFile"`
+	DstServerUseSigning            bool     `default:"false"           json:"dstServerUseSigning" yaml:"dstServerUseSigning"`
 	DstAttrValTimestampFormat      string   `default:"2006-01-02T15:04:05Z" json:"dstAttrValTimestampFormat" yaml:"dstAttrValTimestampFormat"`
 	DstAttrValTimezone             string   `default:"UTC"             json:"dstAttrValTimezone" yaml:"dstAttrValTimezone"`
 	DstDoNotDoParameterURLEncoding bool     `default:"false"          json:"dstDoNotDoParameterURLEncoding" yaml:"dstDoNotDoParameterURLEncoding"`

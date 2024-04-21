@@ -125,12 +125,15 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// calculate hash value
-	dstServerCertPemFile := myCfg.WebCtxs[idx].DstServerCertPemFile
+	dstServerUseSigning := myCfg.WebCtxs[idx].DstServerUseSigning
+	dstServerPemFile := myCfg.WebCtxs[idx].DstServerPemFile
 	algorithmToUseForHash := myCfg.WebCtxs[idx].AlgorithmToUseForHash
 	dstAttrValHash, _ := app.HexStringOfEncryptedHashValue(
 		dstAttrValUsername+dstAttrValTimestamp,
 		algorithmToUseForHash,
-		dstServerCertPemFile)
+		dstServerPemFile,
+		dstServerUseSigning,
+		myCfg.CliOpts.OptDebug)
 
 	// do URL encoding
 	// first generate "proto://server[:port]"
@@ -186,6 +189,9 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 		redirectURLString = redirectURL.String()
 	}
 
+	if myCfg.CliOpts.OptDebug >= 2 {
+		log.Print("The redirectURLString is " + redirectURLString)
+	}
 	if myCfg.CliOpts.OptDebug >= 3 {
 		w.Write([]byte("GenPortURL is redirecting to:\n" + redirectURLString + "\n"))
 	}
