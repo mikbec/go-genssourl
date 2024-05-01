@@ -3,6 +3,7 @@
 //  * https://gist.github.com/sohamkamani/08377222d5e3e6bc130827f83b0c073e
 //  * https://stackoverflow.com/questions/10701874/generating-the-sha-hash-of-a-string-using-golang
 //  * https://github.com/zaffka/rsa
+//  * https://stackoverflow.com/questions/40870178/golang-rsa-decrypt-no-padding
 //
 
 package app
@@ -23,7 +24,43 @@ import (
 	"hash"
 	"io/ioutil"
 	"log"
+	"math/big"
 )
+
+type DoCryptoTask int
+
+const (
+	// since iota starts with 0, the first value
+	// defined here will be the default
+	DoCryptoTaskUndefined DoCryptoTask = iota
+	DoCryptoTaskEncryption
+	DoCryptoTaskSigning
+	DoCryptoTaskEncRsaNoPadding
+)
+
+func (s DoCryptoTask) String() string {
+	switch s {
+	case DoCryptoTaskEncryption:
+		return "encryption"
+	case DoCryptoTaskSigning:
+		return "signing"
+	case DoCryptoTaskEncRsaNoPadding:
+		return "enc_rsa_no_padding"
+	}
+	return "undefined"
+}
+
+func StringToDoCryptoTask(str string) DoCryptoTask {
+	switch str {
+	case "encryption":
+		return DoCryptoTaskEncryption
+	case "signing":
+		return DoCryptoTaskSigning
+	case "enc_rsa_no_padding":
+		return DoCryptoTaskEncRsaNoPadding
+	}
+	return DoCryptoTaskUndefined
+}
 
 func ParseRsaPrivateKeyFromPemStr(privPEM []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(privPEM)
@@ -100,14 +137,14 @@ func HexStringOfHashValue(inputMessage string, hashAlgo string) (string, error) 
 	var myHash hash.Hash
 	myStringHash := ""
 
-	switch {
-	case hashAlgo == "md5":
+	switch hashAlgo {
+	case "md5":
 		myHash = md5.New()
-	case hashAlgo == "sha1":
+	case "sha1":
 		myHash = sha1.New()
-	case hashAlgo == "sha256":
+	case "sha256":
 		myHash = sha256.New()
-	case hashAlgo == "sha512":
+	case "sha512":
 		myHash = sha512.New()
 	default:
 		return "", errors.New("Hash algorithm is not supported.")
@@ -118,7 +155,7 @@ func HexStringOfHashValue(inputMessage string, hashAlgo string) (string, error) 
 	return myStringHash, nil
 }
 
-func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string, useSigning bool, optDebug ...int) (string, error) {
+func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string, doCryptoTaskString string, optDebug ...int) (string, error) {
 	var myHash hash.Hash
 	var myCHash crypto.Hash
 	myStringHash := ""
@@ -126,30 +163,35 @@ func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string
 	var rsaPubKey *rsa.PublicKey
 	var encryptedBytes []byte
 	var err error
+	doCryptoTask := StringToDoCryptoTask(doCryptoTaskString)
 
 	var debug int = 0
 	if len(optDebug) > 0 {
 		debug = optDebug[0]
 	}
 
-	switch {
-	case hashAlgo == "unhashed":
-		if useSigning == true {
+	if doCryptoTask == DoCryptoTaskUndefined {
+		return "", errors.New("CryptoTask '" + doCryptoTaskString + "' is not supported.")
+	}
+
+	switch hashAlgo {
+	case "unhashed":
+		if doCryptoTask == DoCryptoTaskSigning {
 			myHash = nil
 		} else {
 			return "", errors.New("Hash algorithm only supported with PrivateKey.")
 		}
 		myCHash = crypto.Hash(0) // Note: crypto.Hash(0), unhashed payload
-	case hashAlgo == "md5":
+	case "md5":
 		myHash = md5.New()
 		myCHash = crypto.MD5
-	case hashAlgo == "sha1":
+	case "sha1":
 		myHash = sha1.New()
 		myCHash = crypto.SHA1
-	case hashAlgo == "sha256":
+	case "sha256":
 		myHash = sha256.New()
 		myCHash = crypto.SHA256
-	case hashAlgo == "sha512":
+	case "sha512":
 		myHash = sha512.New()
 		myCHash = crypto.SHA512
 	default:
@@ -168,16 +210,18 @@ func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string
 	}
 
 	if debug >= 2 {
-		log.Print("Using PEM File: " + keyPemFileName)
-		log.Print("Using HashAlgo: " + hashAlgo)
-		log.Print("InputString   : " + inputMessage)
+		log.Print("Using PEM File  : " + keyPemFileName)
+		log.Print("Doing CryptoTask: " + doCryptoTaskString)
+		log.Print("Using HashAlgo  : " + hashAlgo)
+		log.Print("InputString     : " + inputMessage)
 		log.Print("got " + string(keyPemFileContent))
 	}
 
-	if useSigning == true {
+	switch doCryptoTask {
+	case DoCryptoTaskSigning:
 		//rsaPrivKey, err = ParseRsaPrivateKeyFromPemStrToPublicKey(keyPemFileContent)
 		rsaPrivKey, err = ParseRsaPrivateKeyFromPemStr(keyPemFileContent)
-	} else {
+	default:
 		rsaPubKey, err = ParseRsaPublicKeyFromPemStr(keyPemFileContent)
 	}
 	if err != nil {
@@ -189,7 +233,7 @@ func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string
 
 	// generate encrypted hash
 	var payload []byte = []byte(inputMessage)
-	if useSigning == true && myHash != nil {
+	if (doCryptoTask == DoCryptoTaskSigning || doCryptoTask == DoCryptoTaskEncRsaNoPadding) && myHash != nil {
 		// generate hash of input
 		myHash.Write([]byte(inputMessage))
 		payload = myHash.Sum(nil)
@@ -204,20 +248,27 @@ func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string
 	}
 
 	// sign or encrypt hash
-	if useSigning == true {
-		encryptedBytes, err = rsa.SignPSS(
-			rand.Reader,
-			rsaPrivKey,
-			myCHash,
-			payload,
-			nil)
-	} else {
+	switch doCryptoTask {
+	case DoCryptoTaskEncryption:
 		encryptedBytes, err = rsa.EncryptOAEP(
 			myHash,
 			rand.Reader,
 			rsaPubKey,
 			payload,
 			nil)
+	case DoCryptoTaskSigning:
+		encryptedBytes, err = rsa.SignPSS(
+			rand.Reader,
+			rsaPrivKey,
+			myCHash,
+			payload,
+			nil)
+	case DoCryptoTaskEncRsaNoPadding:
+		// Do simple RSA encryption with Nonce and No Padding
+		c := new(big.Int).SetBytes([]byte(payload))
+		encryptedBytes = c.Exp(c, big.NewInt(int64(rsaPubKey.E)), rsaPubKey.N).Bytes()
+	default:
+		err = errors.New("CryptoTask '" + doCryptoTaskString + "' is not supported ... we should not get there.")
 	}
 	if err != nil {
 		log.Fatal(err)

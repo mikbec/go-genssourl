@@ -125,14 +125,14 @@ func doRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// calculate hash value
-	dstServerUseSigning := myCfg.WebCtxs[idx].DstServerUseSigning
+	dstServerDoCryptoTask := myCfg.WebCtxs[idx].DstServerDoCryptoTask
 	dstServerPemFile := myCfg.WebCtxs[idx].DstServerPemFile
 	algorithmToUseForHash := myCfg.WebCtxs[idx].AlgorithmToUseForHash
 	dstAttrValHash, _ := app.HexStringOfEncryptedHashValue(
 		dstAttrValUsername+dstAttrValTimestamp,
 		algorithmToUseForHash,
 		dstServerPemFile,
-		dstServerUseSigning,
+		dstServerDoCryptoTask,
 		myCfg.CliOpts.OptDebug)
 
 	// do URL encoding
