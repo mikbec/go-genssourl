@@ -36,6 +36,7 @@ const (
 	DoCryptoTaskEncryption
 	DoCryptoTaskSigning
 	DoCryptoTaskEncRsaNoPadding
+	DoCryptoTaskSignRsaNoPadding
 )
 
 func (s DoCryptoTask) String() string {
@@ -46,6 +47,8 @@ func (s DoCryptoTask) String() string {
 		return "signing"
 	case DoCryptoTaskEncRsaNoPadding:
 		return "enc_rsa_no_padding"
+	case DoCryptoTaskSignRsaNoPadding:
+		return "sign_rsa_no_padding"
 	}
 	return "undefined"
 }
@@ -58,6 +61,8 @@ func StringToDoCryptoTask(str string) DoCryptoTask {
 		return DoCryptoTaskSigning
 	case "enc_rsa_no_padding":
 		return DoCryptoTaskEncRsaNoPadding
+	case "sign_rsa_no_padding":
+		return DoCryptoTaskSignRsaNoPadding
 	}
 	return DoCryptoTaskUndefined
 }
@@ -66,6 +71,11 @@ func ParseRsaPrivateKeyFromPemStr(privPEM []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(privPEM)
 	if block == nil {
 		return nil, errors.New("failed to parse PEM block containing the PrivateKey")
+	}
+
+	privRsaKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err == nil {
+		return privRsaKey, nil
 	}
 
 	priv, err := x509.ParsePKCS8PrivateKey(block.Bytes)
@@ -219,12 +229,21 @@ func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string
 
 	switch doCryptoTask {
 	case DoCryptoTaskSigning:
+		fallthrough
+	case DoCryptoTaskSignRsaNoPadding:
 		//rsaPrivKey, err = ParseRsaPrivateKeyFromPemStrToPublicKey(keyPemFileContent)
 		rsaPrivKey, err = ParseRsaPrivateKeyFromPemStr(keyPemFileContent)
+		if debug >= 3 {
+			log.Print("Try to use private RSA key...")
+		}
 	default:
 		rsaPubKey, err = ParseRsaPublicKeyFromPemStr(keyPemFileContent)
+		if debug >= 3 {
+			log.Print("Try to use public RSA key...")
+		}
 	}
 	if err != nil {
+		log.Print("Something goes wrong while parsing key stuff...")
 		log.Fatal(err)
 		return "", err
 	} else {
@@ -233,7 +252,10 @@ func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string
 
 	// generate encrypted hash
 	var payload []byte = []byte(inputMessage)
-	if (doCryptoTask == DoCryptoTaskSigning || doCryptoTask == DoCryptoTaskEncRsaNoPadding) && myHash != nil {
+	if myHash != nil &&
+		(doCryptoTask == DoCryptoTaskSigning ||
+			doCryptoTask == DoCryptoTaskEncRsaNoPadding ||
+			doCryptoTask == DoCryptoTaskSignRsaNoPadding) {
 		// generate hash of input
 		myHash.Write([]byte(inputMessage))
 		payload = myHash.Sum(nil)
@@ -267,6 +289,10 @@ func HexStringOfEncryptedHashValue(inputMessage, hashAlgo, keyPemFileName string
 		// Do simple RSA encryption with Nonce and No Padding
 		c := new(big.Int).SetBytes([]byte(payload))
 		encryptedBytes = c.Exp(c, big.NewInt(int64(rsaPubKey.E)), rsaPubKey.N).Bytes()
+	case DoCryptoTaskSignRsaNoPadding:
+		// Do simple RSA signing with Nonce and No Padding
+		c := new(big.Int).SetBytes([]byte(payload))
+		encryptedBytes = c.Exp(c, rsaPrivKey.D, rsaPrivKey.N).Bytes()
 	default:
 		err = errors.New("CryptoTask '" + doCryptoTaskString + "' is not supported ... we should not get there.")
 	}

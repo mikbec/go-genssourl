@@ -64,9 +64,9 @@ Die Bedeutung der einzelnen URL-Parameter:
         * falls diese Zeichenkette leer ist, wird das Attribut nicht gesetzt
 
 ## Die Berechnung des Hash-Wertes
-Die Berechnung des Hash-Wertes erfolgt folgendermassen:
+Die Berechnung des Hash-Wertes erfolgt (zum Beispiel) folgendermassen:
 
 * Es wird eine Zeichenkette erzeugt, die aus dem Accountname und dem Zeitstempel besteht, welche ohne Trennzeichen zusammengefuegt werden.
 * Von dieser Zeichenkette wird der SHA1-Hash-Wert berechnet.
-* Dieser SHA1-Hash-Wert wird mit einem privaten RSA Schluessel verschluesselt.
-* Dieser verschluesselte Byte-Wert wird in eine Hexadezimal-Repraesentation ueberfuehrt. 
+* Dieser SHA1-Hash-Wert wird mit einem privaten RSA Schluessel signiert.
+* Dieser resultierende Byte-Wert wird in eine Hexadezimal-Repraesentation ueberfuehrt. 

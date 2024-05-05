@@ -4,8 +4,23 @@
 log:
     logPath: logs
     logLevel: debug
+
 webCtxs:
-    - dstServerProtocol: https
+      # local server URL number context #1 -> /login/4srv1
+    - thisServerPath: /login/4svc1
+      # we want only the REMOTE_USERNAME from our frontend
+      proxyAttrRemoteUsername: REMOTE_USERNAME
+      # empty array option "proxyAttrRemoteUsernames" triggers to use option
+      # "proxyAttrRemoteUsername"
+      proxyAttrRemoteUsernames: []
+      #
+      # target service for which we generate the URL
+      #
+      # target service wants:
+      # * url
+      #   https://localhost/?hash=1234...fdab13&ts=2006-01-02+15%3A04%3A05+%2B0200&user=<user>
+      # * attr "id" will be omitted because it is ""  
+      dstServerProtocol: https
       dstServerHost: localhost
       dstServerPort: ""
       dstServerPath: ""
@@ -17,13 +32,60 @@ webCtxs:
       dstAttrValTimestamp: ""
       dstAttrValHash: ""
       dstAttrValId: ""
+      # * hash calculation is "md5"-sum and encrypted ("encryption") with
+      #   public key in PEM file "dst-srv1.crt.pem"
       algorithmToUseForHash: md5
-      dstServerPemFile: dst-srv.crt.pem
+      dstServerPemFile: dst-srv1.crt.pem
+      # * possible values are "encryption", "signing", "enc_rsa_no_padding",
+      #   "sign_rsa_no_padding"
       dstServerDoCryptoTask: "encryption"
+      # * attr "ts" should be of format "2006-01-02 15:04:05 -0700" and from
+      #   timezone "Europe/Berlin"
+      dstAttrValTimestampFormat: "2006-01-02 15:04:05 -0700"
+      dstAttrValTimezone: Europe/Berlin
+      # * attributes in URL should be in alphabetic order
+      dstDoNotDoParameterURLEncoding: false
+
+      # local server URL number context #2 -> /login/4srv1
+    - thisServerPath: /login/4svc2
+      # can be any value because next option "proxyAttrRemoteUsernames" is not
+      # empty and so this option will not be used
+      proxyAttrRemoteUsername: ""
+      # we want either the REMOTE_USERNAME or the OIDC_CLAIM_UPN from our
+      # frontend
+      proxyAttrRemoteUsernames:
+        - REMOTE_USERNAME
+        - OIDC_CLAIM_UPN
+      #
+      # target service for which we generate the URL
+      #
+      # target service wants:
+      # * url
+      #   https://localhost:7890/app1?username=<user>&timestamp=2006-01-02T15%3A04%3A05Z&key=1234...fdab13&cutomer=TEST
+      # * attr "id" will be omitted because it is ""  
+      dstServerProtocol: https
+      dstServerHost: localhost
+      dstServerPort: "7890"
+      dstServerPath: "/app1"
+      dstAttrKeyUsername: username
+      dstAttrKeyTimestamp: timestamp
+      dstAttrKeyHash: key
+      dstAttrKeyId: customer
+      dstAttrValUsername: ""
+      dstAttrValTimestamp: ""
+      dstAttrValHash: ""
+      dstAttrValId: "TEST"
+      # * hash calculation is "sha1"-sum and signed with no_padding
+      #   ("sign_rsa_no_padding") with private key in PEM file
+      #   "dst-srv2.key.pem"
+      algorithmToUseForHash: sha1
+      dstServerPemFile: dst-srv2.key.pem
+      # * possible values are "encryption", "signing", "enc_rsa_no_padding",
+      #   "sign_rsa_no_padding"
+      dstServerDoCryptoTask: "sign_rsa_no_padding"
+      # * attr "timestamp" should be of format "2006-01-02T15:04:05Z" and from
+      #   timezone "UTC"
       dstAttrValTimestampFormat: "2006-01-02T15:04:05Z"
       dstAttrValTimezone: UTC
-      dstDoNotDoParameterURLEncoding: false
-      thisServerPath: /
-      proxyAttrRemoteUsername: REMOTE_USERNAME
-      proxyAttrRemoteUsernames: []
-
+      # * attributes in URL should be in order "Username", "Timestamp", "Hash", "Id"
+      dstDoNotDoParameterURLEncoding: true

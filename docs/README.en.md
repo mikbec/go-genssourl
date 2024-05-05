@@ -65,10 +65,11 @@ The meaning of the individual parameters:
         * If this string is the empty string then this parameter is not set.
 
 ## The calculation of the hash value
-The hash value is calculated as follows:
+The hash value is calculated (for example) as follows:
 
 * A string is created that consists of the account name and the timestamp, which are joined together without separators.
 * The SHA1 hash value is calculated from this string.
-* This SHA1 hash value is encrypted with a private RSA key.
-* This encrypted byte value is converted into a hexadecimal representation.
+* This SHA1 hash value is signed with a private RSA key.
+* This resulting byte value is converted into a hexadecimal representation.
 
+## Configuration file options
